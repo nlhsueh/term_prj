@@ -73,6 +73,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
+import dj_database_url
+
 # Database configuration
 # Support Railway's DATABASE_URL or MYSQL_URL
 db_url = os.environ.get('DATABASE_URL') or os.environ.get('MYSQL_URL')
