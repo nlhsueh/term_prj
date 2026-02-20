@@ -19,6 +19,10 @@ class ImpersonationMiddleware(MiddlewareMixin):
 class PasswordChangeMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if request.user.is_authenticated and request.user.role == 'student':
+            # Skip if professor is impersonating
+            if getattr(request, 'is_impersonating', False):
+                return None
+                
             if not request.user.has_changed_password:
                 # Allow access to password change views and logout
                 allowed_paths = [
