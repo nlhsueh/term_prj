@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">小組評分：{{ group.name }}</h1>
+    <a href="{% url 'professor_dashboard' %}" class="text-blue-600 hover:underline">返回清單</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Submissions -->
+    <div class="lg:col-span-2 space-y-6">
+        <section class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">繳交記錄</h2>
+            {% if submissions %}
+            <ul class="divide-y">
+                {% for sub in submissions %}
+                <li class="py-3 flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {{ sub.get_type_display }}
+                        </span>
+                        <span class="ml-2 text-gray-600 text-sm">{{ sub.uploaded_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <a href="{{ sub.file.url }}" target="_blank" class="text-blue-600 hover:underline">下載檔案</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-gray-500 italic">無任何繳交記錄。</p>
+            {% endif %}
+        </section>
+
+        <section class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">組員貢獻度</h2>
+            {% if contributions %}
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-left border-b">
+                        <th class="py-2">姓名</th>
+                        <th class="py-2">貢獻度 (%)</th>
+                        <th class="py-2">具體描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for con in contributions %}
+                    <tr class="border-b last:border-0">
+                        <td class="py-2">{{ con.student.first_name }}</td>
+                        <td class="py-2 font-bold">{{ con.percentage }}%</td>
+                        <td class="py-2 text-gray-600">{{ con.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-gray-500 italic">尚未填寫貢獻度。</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <!-- Grading Form -->
+    <div class="bg-white p-6 rounded-lg shadow h-fit">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">評分</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">小組基本分 (全組)</label>
+                    <input type="number" step="0.01" name="team_base_score"
+                        value="{{ form.team_base_score.value|default:0 }}"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">教師備註 (個人加減分或評語)</label>
+                    <textarea name="professor_notes" rows="4"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">{{ form.professor_notes.value|default:'' }}</textarea>
+                </div>
+            </div>
+            <div class="mt-8">
+                <button type="submit"
+                    class="w-full bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700">儲存評分</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

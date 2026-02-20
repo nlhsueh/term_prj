@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-lg shadow">
+    <h1 class="text-2xl font-bold mb-6">繳交檔案 - {{ group.name }}</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">繳交類型</label>
+                {{ form.type.errors }}
+                <select name="type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="proposal_draft">計畫書初稿</option>
+                    <option value="final_report">期末報告 (PDF)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">選擇檔案 (PDF/ZIP)</label>
+                {{ form.file.errors }}
+                <input type="file" name="file" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required>
+            </div>
+        </div>
+        <div class="mt-8 flex justify-end space-x-4">
+            <a href="{% url 'dashboard' %}" class="px-4 py-2 text-gray-600 hover:underline">取消</a>
+            <button type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">上傳檔案</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

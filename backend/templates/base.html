@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}期末專案管理系統{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'dashboard' %}" class="text-xl font-bold">專案管理系統</a>
+            <div class="space-x-4">
+                {% if user.is_authenticated %}
+                <span>你好, {{ user.first_name }} ({{ user.student_id }})</span>
+                {% if user.role == 'professor' %}
+                <a href="{% url 'admin:index' %}" class="hover:underline">管理後台</a>
+                {% endif %}
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="hover:underline">登出</button>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}" class="hover:underline">登入</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-200 text-center py-4 text-sm text-gray-600 mt-12">
+        &copy; 2026 程式語言課程期末專案管理系統
+    </footer>
+</body>
+
+</html>

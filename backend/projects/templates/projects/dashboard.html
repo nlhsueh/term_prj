@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">學生專題儀表板</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Group Information -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">我的分組</h2>
+        {% if memberships %}
+        {% for membership in memberships %}
+        <div
+            class="mb-4 p-4 border rounded {% if membership.is_confirmed %}bg-green-50{% else %}bg-yellow-50{% endif %}">
+            <p class="font-bold text-lg">{{ membership.group.name }}</p>
+            <p class="text-gray-600">專案名稱: {{ membership.group.project_name }}</p>
+            <p class="text-sm mt-2">
+                狀態:
+                {% if membership.is_confirmed %}
+                <span class="text-green-600 font-semibold">已確認加入</span>
+                {% else %}
+                <span class="text-yellow-600 font-semibold">待確認</span>
+                <a href="{% url 'confirm_membership' membership.id %}"
+                    class="ml-2 text-blue-600 hover:underline">去確認</a>
+                {% endif %}
+            </p>
+            <div class="mt-4 flex space-x-2">
+                {% if membership.is_confirmed %}
+                <a href="{% url 'upload_submission' membership.group.id %}"
+                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">繳交計畫書/報告</a>
+                {% endif %}
+            </div>
+            <div class="mt-4">
+                <p class="text-sm font-semibold">組員名單:</p>
+                <ul class="list-disc list-inside text-sm text-gray-700">
+                    {% for m in membership.group.membership_set.all %}
+                    <li>{{ m.user.first_name }} ({{ m.user.student_id }}) -
+                        {% if m.is_confirmed %}已確認{% else %}未確認{% endif %}
+                        {% if m.user == membership.group.leader %}(隊長){% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-gray-500 italic">尚未加入任何組別。</p>
+        <div class="mt-4">
+            <a href="{% url 'create_group' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">發起分組
+                (擔任隊長)</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Deadlines/Config -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4 border-b pb-2">重要時程</h2>
+        <p class="text-gray-500 italic">課程時程資訊尚未設定。</p>
+    </div>
+</div>
+{% endblock %}

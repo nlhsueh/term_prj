@@ -1,0 +1,150 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.contrib import messages
+from django.http import HttpResponse
+import csv
+from .models import Group, Membership, User, Submission, Contribution, Score
+from .forms import GroupForm, SubmissionForm, ScoreForm
+
+class CustomPasswordChangeView(PasswordChangeView):
+    success_url = reverse_lazy('dashboard') # Redirect to dashboard instead of password_change_done if we want a better UX
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self.request.user.has_changed_password = True
+        self.request.user.save()
+        return response
+
+@login_required
+def dashboard(request):
+    # Fetch groups lead by user
+    led_groups = Group.objects.filter(leader=request.user)
+    # Fetch memberships for the user
+    memberships = Membership.objects.filter(user=request.user)
+    
+    return render(request, 'projects/dashboard.html', {
+        'led_groups': led_groups,
+        'memberships': memberships,
+    })
+
+@login_required
+def create_group(request):
+    # Check if user is already in a group as leader or member
+    if Membership.objects.filter(user=request.user).exists():
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = GroupForm(request.POST, user=request.user)
+        if form.is_valid():
+            with transaction.atomic():
+                group = form.save(commit=False)
+                group.leader = request.user
+                group.save()
+                
+                # Manual many-to-many through Membership
+                selected_members = form.cleaned_data['members']
+                # Add leader as a confirmed member
+                Membership.objects.create(user=request.user, group=group, is_confirmed=True)
+                # Add other members
+                for member in selected_members:
+                    Membership.objects.create(user=member, group=group, is_confirmed=False)
+                
+                return redirect('dashboard')
+    else:
+        form = GroupForm(user=request.user)
+    return render(request, 'projects/group_form.html', {'form': form})
+
+@login_required
+def confirm_membership(request, membership_id):
+    membership = get_object_or_404(Membership, id=membership_id, user=request.user)
+    if request.method == 'POST':
+        membership.is_confirmed = True
+        membership.save()
+        return redirect('dashboard')
+    return render(request, 'projects/confirm_membership.html', {'membership': membership})
+
+@login_required
+def upload_submission(request, group_id):
+    group = get_object_or_404(Group, id=group_id, members=request.user)
+    if request.method == 'POST':
+        form = SubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            submission = form.save(commit=False)
+            submission.group = group
+            submission.save()
+            messages.success(request, "檔案上傳成功！")
+            return redirect('dashboard')
+    else:
+        form = SubmissionForm()
+    return render(request, 'projects/upload.html', {'form': form, 'group': group})
+
+@login_required
+def professor_dashboard(request):
+    if request.user.role != 'professor' and not request.user.is_staff:
+        return redirect('dashboard')
+    groups = Group.objects.all()
+    return render(request, 'projects/professor_dashboard.html', {'groups': groups})
+
+@login_required
+def grade_group(request, group_id):
+    if request.user.role != 'professor' and not request.user.is_staff:
+        return redirect('dashboard')
+    group = get_object_or_404(Group, id=group_id)
+    score, created = Score.objects.get_or_create(group=group)
+    
+    if request.method == 'POST':
+        form = ScoreForm(request.POST, instance=score)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{group.name} 評分成功！")
+            return redirect('professor_dashboard')
+    else:
+        form = ScoreForm(instance=score)
+    
+    submissions = Submission.objects.filter(group=group).order_by('-uploaded_at')
+    contributions = Contribution.objects.filter(group=group)
+    
+    return render(request, 'projects/grading.html', {
+        'group': group,
+        'form': form,
+        'submissions': submissions,
+        'contributions': contributions
+    })
+
+@login_required
+def export_grades_csv(request):
+    if request.user.role != 'professor' and not request.user.is_staff:
+        return redirect('dashboard')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="final_grades.csv"'
+    # Fix for Chinese characters in Excel
+    response.write('\ufeff'.encode('utf8'))
+    writer = csv.writer(response)
+    writer.writerow(['學號', '姓名', '組別', '計畫名稱', '小組分數', '貢獻度(%)', '貢獻度描述'])
+    
+    memberships = Membership.objects.select_related('user', 'group', 'group__score').all()
+    
+    for m in memberships:
+        score_obj = getattr(m.group, 'score', None)
+        team_score = score_obj.team_base_score if score_obj else "未評分"
+        
+        # Get contribution for this specific student in this group
+        contrib = Contribution.objects.filter(group=m.group, student=m.user).first()
+        pct = f"{contrib.percentage}%" if contrib else "未填寫"
+        desc = contrib.description if contrib else ""
+        
+        writer.writerow([
+            m.user.student_id,
+            m.user.first_name,
+            m.group.name,
+            m.group.project_name,
+            team_score,
+            pct,
+            desc
+        ])
+    
+    return response
