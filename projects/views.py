@@ -121,7 +121,8 @@ def edit_group(request, group_id):
         form = GroupForm(request.POST, instance=group, user=request.user, course=course)
         if form.is_valid():
             with transaction.atomic():
-                group = form.save()
+                group = form.save(commit=False)
+                group.save()
                 
                 # Update members
                 selected_members = form.cleaned_data['members']
@@ -131,13 +132,16 @@ def edit_group(request, group_id):
                 current_user_ids = set(m.user_id for m in current_memberships)
                 selected_user_ids = set(m.id for m in selected_members)
                 
-                # Delete removed members
+                # Delete removed members (this excludes leader already)
                 current_memberships.exclude(user_id__in=selected_user_ids).delete()
                 
                 # Add new members
                 for member in selected_members:
                     if member.id not in current_user_ids:
-                        Membership.objects.create(user=member, group=group, is_confirmed=False)
+                        Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
+                
+                # Double check leader has confirmed membership
+                Membership.objects.get_or_create(user=group.leader, group=group, defaults={'is_confirmed': True})
                 
                 messages.success(request, "小組資訊已更新。")
                 return redirect('dashboard')
