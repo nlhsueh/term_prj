@@ -78,10 +78,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 db_url = os.environ.get('DATABASE_URL') or os.environ.get('MYSQL_URL')
 
 if db_url:
-    db_ssl = os.environ.get('DB_SSL', 'True') == 'True'
+    # Default to False for Railway's internal MySQL connections
+    db_ssl = os.environ.get('DB_SSL', 'False') == 'True'
     DATABASES = {
-        'default': dj_database_url.config(default=db_url, conn_max_age=600, ssl_require=db_ssl)
+        'default': dj_database_url.parse(db_url, conn_max_age=600)
     }
+    DATABASES['default']['OPTIONS'] = {'ssl': {'ca': ''}} if db_ssl else {}
 elif os.environ.get('DB_NAME'):
     DATABASES = {
         'default': {
