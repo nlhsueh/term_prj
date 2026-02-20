@@ -1,12 +1,25 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
-<div>
-    <h1>Import Students from CSV</h1>
-    <p>File should have columns: <b>student_id, name</b></p>
+<div class="module" style="padding: 20px; background: white; border-radius: 8px; shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h1 class="text-2xl font-bold mb-4">匯入學生名單 (CSV)</h1>
+    <p class="mb-6 text-gray-600">
+        檔案格式：CSV。系統會自動偵測標題（如：學號、姓名）。<br>
+        如果您沒有標題行，請確保：<b>第一欄為學號，第二欄為姓名</b>。
+    </p>
+
     <form action="." method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Upload CSV" class="default">
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">選擇 CSV 檔案：</label>
+            <input type="file" name="csv_file" required
+                style="border: 1px solid #d1d5db; border-radius: 4px; padding: 8px; width: 100%;">
+        </div>
+
+        <div style="margin-top: 30px;">
+            <input type="submit" value="開始匯入" class="default"
+                style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            <a href=".." style="margin-left: 15px; text-decoration: none; color: #4b5563;">取消</a>
+        </div>
     </form>
 </div>
 {% endblock %}
