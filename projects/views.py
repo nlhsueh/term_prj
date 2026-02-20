@@ -87,7 +87,7 @@ def create_group(request):
         if course:
             form.fields['members'].queryset = User.objects.filter(
                 role='student', enrolled_courses=course
-            ).exclude(id=request.user.id).exclude(joined_groups__group__course=course)
+            ).exclude(id=request.user.id).exclude(joined_groups__course=course)
             
     if request.headers.get('HX-Request') and not request.headers.get('HX-Boosted'):
         # If somehow a non-boosted HTMX request reaches here, still return full page or handle as needed
