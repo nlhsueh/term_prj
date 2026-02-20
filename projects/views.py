@@ -35,7 +35,7 @@ def dashboard(request):
         'memberships': memberships,
     }
     
-    if request.headers.get('HX-Request'):
+    if request.headers.get('HX-Target') == 'dashboard-content':
         return render(request, 'projects/partials/dashboard_content.html', context)
         
     return render(request, 'projects/dashboard.html', context)
@@ -109,7 +109,7 @@ def professor_dashboard(request):
     courses = Course.objects.all().order_by('-year', '-semester')
     context = {'courses': courses}
     
-    if request.headers.get('HX-Request'):
+    if request.headers.get('HX-Target') == 'professor-dashboard-content':
         return render(request, 'projects/partials/professor_dashboard_content.html', context)
         
     return render(request, 'projects/professor_dashboard.html', context)
@@ -131,7 +131,7 @@ def course_detail(request, course_id):
         'unassigned_students': unassigned_students,
     }
     
-    if request.headers.get('HX-Request'):
+    if request.headers.get('HX-Target') == 'course-detail-content':
         return render(request, 'projects/partials/course_detail_content.html', context)
         
     return render(request, 'projects/course_detail.html', context)

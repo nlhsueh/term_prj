@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900" hx-boost="true">
+<body class="bg-gray-50 text-gray-900" hx-boost="true" hx-target="#main-content" hx-select="#main-content">
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <a href="{% url 'dashboard' %}" class="text-xl font-bold">專案管理系統</a>
@@ -32,7 +32,7 @@
 
     <main class="container mx-auto px-4 py-8">
         {% if messages %}
-        <div class="mb-4">
+        <div class="mb-4" id="messages-container">
             {% for message in messages %}
             <div
                 class="p-4 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
@@ -42,7 +42,9 @@
         </div>
         {% endif %}
 
-        {% block content %}{% endblock %}
+        <div id="main-content">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <footer class="bg-gray-200 text-center py-4 text-sm text-gray-600 mt-12">
