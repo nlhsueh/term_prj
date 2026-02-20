@@ -75,8 +75,9 @@ WSGI_APPLICATION = 'core.wsgi.application'
 import dj_database_url
 
 if os.environ.get('DATABASE_URL'):
+    db_ssl = os.environ.get('DB_SSL', 'True') == 'True'
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=db_ssl)
     }
 elif os.environ.get('DB_NAME'):
     DATABASES = {

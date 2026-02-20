@@ -15,8 +15,11 @@ if not User.objects.filter(username='admin').exists():
 END
 
 # Start server (Development or Gunicorn)
+# Use Railway's $PORT or default to 8000
+APP_PORT=${PORT:-8000}
+
 if [ "$DEBUG" = "False" ]; then
-    gunicorn core.wsgi --bind 0.0.0.0:$PORT
+    gunicorn core.wsgi --bind 0.0.0.0:$APP_PORT
 else
-    python manage.py runserver 0.0.0.0:8000
+    python manage.py runserver 0.0.0.0:$APP_PORT
 fi
