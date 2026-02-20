@@ -17,7 +17,7 @@ class GroupForm(forms.ModelForm):
 
     class Meta:
         model = Group
-        fields = ['name', 'project_name', 'project_description', 'members']
+        fields = ['name', 'project_name', 'project_description']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500',
