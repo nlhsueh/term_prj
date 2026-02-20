@@ -18,14 +18,14 @@
                 {% if user.is_authenticated %}
                 <span>你好, {{ user.first_name }} ({{ user.student_id }})</span>
                 {% if user.role == 'professor' %}
-                <a href="{% url 'admin:index' %}" class="hover:underline">管理後台</a>
+                <a href="{% url 'admin:index' %}" class="hover:underline" hx-boost="false">管理後台</a>
                 {% endif %}
                 <form action="{% url 'logout' %}" method="post" class="inline" hx-boost="false">
                     {% csrf_token %}
                     <button type="submit" class="hover:underline">登出</button>
                 </form>
                 {% else %}
-                <a href="{% url 'login' %}" class="hover:underline">登入</a>
+                <a href="{% url 'login' %}" class="hover:underline" hx-boost="false">登入</a>
                 {% endif %}
             </div>
         </div>

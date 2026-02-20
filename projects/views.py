@@ -35,6 +35,7 @@ def dashboard(request):
         'memberships': memberships,
     }
     
+    # Return partial if targeted, otherwise full page
     if request.headers.get('HX-Target') == 'dashboard-content':
         return render(request, 'projects/partials/dashboard_content.html', context)
         
@@ -86,7 +87,7 @@ def confirm_membership(request, membership_id):
         membership.save()
         
         if request.headers.get('HX-Request'):
-            # Return fresh dashboard partial
+            # IMPORTANT: We MUST return the partial that matches the button's hx-target (#dashboard-content)
             courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
             memberships = Membership.objects.filter(user=request.user).select_related('group', 'group__course')
             return render(request, 'projects/partials/dashboard_content.html', {
