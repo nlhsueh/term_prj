@@ -44,7 +44,7 @@ def dashboard(request):
     context = {
         'course_list': course_list,
         'memberships': memberships,
-        'app_version': '2.1.1',
+        'app_version': '2.1.2',
     }
     
     # Return partial if targeted, otherwise full page
@@ -138,6 +138,7 @@ def edit_group(request, group_id):
                         Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
                 
                 # 3. ABSOLUTELY ensure the leader is a member and confirmed
+                # We use the instance group and the leader from that instance
                 Membership.objects.update_or_create(
                     user=group.leader, 
                     group=group, 
