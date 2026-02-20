@@ -124,25 +124,22 @@ def edit_group(request, group_id):
                 group = form.save(commit=False)
                 group.save()
                 
-                # Update members
+                # Update members: handle purely non-leader members
                 selected_members = form.cleaned_data['members']
-                
-                # Current non-leader members
-                current_memberships = Membership.objects.filter(group=group).exclude(user=group.leader)
-                current_user_ids = set(m.user_id for m in current_memberships)
                 selected_user_ids = set(m.id for m in selected_members)
                 
-                # Delete removed members (this excludes leader already)
-                current_memberships.exclude(user_id__in=selected_user_ids).delete()
+                # 1. Delete all current non-leader memberships
+                Membership.objects.filter(group=group).exclude(user=group.leader).delete()
                 
-                # Add new members
+                # 2. Re-create memberships from selected list (excluding leader just in case)
                 for member in selected_members:
-                    if member.id not in current_user_ids:
+                    if member != group.leader:
                         Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
                 
-                # Ensure leader has confirmed membership
+                # 3. ABSOLUTELY ensure the leader is a member and confirmed
                 Membership.objects.update_or_create(
-                    user=group.leader, group=group, 
+                    user=group.leader, 
+                    group=group, 
                     defaults={'is_confirmed': True}
                 )
                 
