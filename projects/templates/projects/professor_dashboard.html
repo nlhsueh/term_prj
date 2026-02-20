@@ -1,40 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-center">
-    <h1 class="text-3xl font-bold">教授管理後台</h1>
-    <div class="flex space-x-2">
-        <a href="/admin/projects/course/add/"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">+ 建立新課程</a>
-        <a href="{% url 'export_grades_csv' %}"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-bold">匯出所有成績 (CSV)</a>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for course in courses %}
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-600">
-        <h2 class="text-xl font-bold mb-2">{{ course.name }}</h2>
-        <p class="text-gray-600 text-sm mb-4">{{ course.year }} 學期 {{ course.semester }}</p>
-
-        <div class="flex flex-col space-y-2">
-            <div class="flex justify-between text-sm">
-                <span>註冊學生:</span>
-                <span class="font-semibold">{{ course.students.count }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-                <span>小組數量:</span>
-                <span class="font-semibold">{{ course.groups.count }}</span>
-            </div>
-        </div>
-
-        <div class="mt-6 flex space-x-2">
-            <a href="{% url 'course_detail' course.id %}"
-                class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded hover:bg-gray-200 text-sm font-semibold">查看小組</a>
-            <a href="/admin/projects/course/{{ course.id }}/change/"
-                class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded hover:bg-gray-200 text-sm font-semibold">管理課程</a>
-        </div>
-    </div>
-    {% endfor %}
+<div id="professor-dashboard-content">
+    {% include "projects/partials/professor_dashboard_content.html" %}
 </div>
 {% endblock %}

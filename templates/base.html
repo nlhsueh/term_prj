@@ -6,9 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}期末專案管理系統{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900" hx-boost="true">
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <a href="{% url 'dashboard' %}" class="text-xl font-bold">專案管理系統</a>
@@ -45,7 +46,7 @@
     </main>
 
     <footer class="bg-gray-200 text-center py-4 text-sm text-gray-600 mt-12">
-        &copy; 2026 程式語言課程期末專案管理系統
+        &copy; nlhsueh 期末專案管理系統
     </footer>
 </body>
 

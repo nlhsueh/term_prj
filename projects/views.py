@@ -30,10 +30,15 @@ def dashboard(request):
     # memberships for the user
     memberships = Membership.objects.filter(user=request.user).select_related('group', 'group__course')
     
-    return render(request, 'projects/dashboard.html', {
+    context = {
         'courses': courses,
         'memberships': memberships,
-    })
+    }
+    
+    if request.headers.get('HX-Request'):
+        return render(request, 'projects/partials/dashboard_content.html', context)
+        
+    return render(request, 'projects/dashboard.html', context)
 
 @login_required
 def create_group(request):
@@ -102,7 +107,12 @@ def professor_dashboard(request):
     if request.user.role != 'professor' and not request.user.is_staff:
         return redirect('dashboard')
     courses = Course.objects.all().order_by('-year', '-semester')
-    return render(request, 'projects/professor_dashboard.html', {'courses': courses})
+    context = {'courses': courses}
+    
+    if request.headers.get('HX-Request'):
+        return render(request, 'projects/partials/professor_dashboard_content.html', context)
+        
+    return render(request, 'projects/professor_dashboard.html', context)
 
 @login_required
 def course_detail(request, course_id):
@@ -110,10 +120,15 @@ def course_detail(request, course_id):
         return redirect('dashboard')
     course = get_object_or_404(Course, id=course_id)
     groups = Group.objects.filter(course=course)
-    return render(request, 'projects/course_detail.html', {
+    context = {
         'course': course,
         'groups': groups
-    })
+    }
+    
+    if request.headers.get('HX-Request'):
+        return render(request, 'projects/partials/course_detail_content.html', context)
+        
+    return render(request, 'projects/course_detail.html', context)
 
 @login_required
 def grade_group(request, group_id):
