@@ -17,6 +17,7 @@ urlpatterns = [
     path('group/confirm/<int:membership_id>/', project_views.confirm_membership, name='confirm_membership'),
     path('group/upload/<int:group_id>/', project_views.upload_submission, name='upload_submission'),
     path('professor/', project_views.professor_dashboard, name='professor_dashboard'),
+    path('professor/course/<int:course_id>/', project_views.course_detail, name='course_detail'),
     path('professor/grade/<int:group_id>/', project_views.grade_group, name='grade_group'),
     path('professor/export-csv/', project_views.export_grades_csv, name='export_grades_csv'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

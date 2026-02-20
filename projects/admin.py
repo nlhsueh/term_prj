@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 import csv
 import io
-from .models import User, CourseConfig, Group, Submission, Contribution, Score
+from .models import User, Course, Group, Submission, Contribution, Score
 from .forms import CSVImportForm
 
 @admin.register(User)
@@ -28,12 +28,22 @@ class CustomUserAdmin(UserAdmin):
 
     def get_urls(self):
         urls = super().get_urls()
+        return urls # Remove import-csv from UserAdmin
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'year', 'semester')
+    filter_horizontal = ('students',)
+
+    def get_urls(self):
+        urls = super().get_urls()
         my_urls = [
-            path('import-csv/', self.import_csv),
+            path('<int:course_id>/import-csv/', self.import_csv, name='course-import-csv'),
         ]
         return my_urls + urls
 
-    def import_csv(self, request):
+    def import_csv(self, request, course_id):
+        course = get_object_or_404(Course, id=course_id)
         if request.method == "POST":
             csv_file = request.FILES["csv_file"]
             decoded_file = csv_file.read().decode('utf-8')
@@ -41,7 +51,6 @@ class CustomUserAdmin(UserAdmin):
             reader = csv.DictReader(io_string)
             count = 0
             for row in reader:
-                # Expecting columns: student_id, name
                 student_id = row.get('student_id')
                 name = row.get('name')
                 if student_id and name:
@@ -58,15 +67,18 @@ class CustomUserAdmin(UserAdmin):
                     if created:
                         user.set_password(password)
                         user.save()
+                    
+                    # Link student to this course
+                    course.students.add(user)
                     count += 1
-            self.message_user(request, f"Successfully imported {count} students.")
+            self.message_user(request, f"Successfully imported {count} students to {course.name}.")
             return redirect("..")
         
         form = CSVImportForm()
-        payload = {"form": form}
+        payload = {"form": form, "course": course}
         return render(request, "admin/csv_form.html", payload)
 
-admin.site.register(CourseConfig)
+# admin.site.register(Course) is handled by @admin.register
 admin.site.register(Group)
 admin.site.register(Submission)
 admin.site.register(Contribution)

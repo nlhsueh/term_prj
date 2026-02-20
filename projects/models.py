@@ -13,16 +13,20 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.first_name})"
 
-class CourseConfig(models.Model):
+class Course(models.Model):
     name = models.CharField(max_length=100)
+    year = models.IntegerField(default=2024)
+    semester = models.CharField(max_length=10, choices=(('1', '1'), ('2', '2')), default='1')
+    students = models.ManyToManyField(User, related_name='enrolled_courses', blank=True)
     group_deadline = models.DateTimeField()
     proposal_deadline = models.DateTimeField()
     final_deadline = models.DateTimeField()
 
     def __str__(self):
-        return self.name
+        return f"{self.year}-{self.semester} {self.name}"
 
 class Group(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='groups', null=True)
     name = models.CharField(max_length=100)
     leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name='led_groups')
     members = models.ManyToManyField(User, through='Membership', related_name='joined_groups')

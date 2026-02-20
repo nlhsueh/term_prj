@@ -6,7 +6,7 @@ from django.db import transaction
 from django.contrib import messages
 from django.http import HttpResponse
 import csv
-from .models import Group, Membership, User, Submission, Contribution, Score
+from .models import Group, Membership, User, Submission, Contribution, Score, Course
 from .forms import GroupForm, SubmissionForm, ScoreForm
 
 class CustomPasswordChangeView(PasswordChangeView):
@@ -20,20 +20,25 @@ class CustomPasswordChangeView(PasswordChangeView):
 
 @login_required
 def dashboard(request):
-    # Fetch groups lead by user
-    led_groups = Group.objects.filter(leader=request.user)
-    # Fetch memberships for the user
-    memberships = Membership.objects.filter(user=request.user)
+    # Get active courses for this student
+    courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
+    
+    # memberships for the user
+    memberships = Membership.objects.filter(user=request.user).select_related('group', 'group__course')
     
     return render(request, 'projects/dashboard.html', {
-        'led_groups': led_groups,
+        'courses': courses,
         'memberships': memberships,
     })
 
 @login_required
 def create_group(request):
-    # Check if user is already in a group as leader or member
-    if Membership.objects.filter(user=request.user).exists():
+    course_id = request.GET.get('course_id')
+    course = get_object_or_404(Course, id=course_id) if course_id else None
+    
+    # Check if user is already in a group for this specific course
+    if course and Membership.objects.filter(user=request.user, group__course=course).exists():
+        messages.warning(request, f"你已在 {course.name} 的小組中。")
         return redirect('dashboard')
 
     if request.method == 'POST':
@@ -42,6 +47,7 @@ def create_group(request):
             with transaction.atomic():
                 group = form.save(commit=False)
                 group.leader = request.user
+                group.course = course # Link to course
                 group.save()
                 
                 # Manual many-to-many through Membership
@@ -55,7 +61,13 @@ def create_group(request):
                 return redirect('dashboard')
     else:
         form = GroupForm(user=request.user)
-    return render(request, 'projects/group_form.html', {'form': form})
+        # Filter members to those in the same course
+        if course:
+            form.fields['members'].queryset = User.objects.filter(
+                role='student', enrolled_courses=course
+            ).exclude(id=request.user.id).exclude(joined_groups__group__course=course)
+            
+    return render(request, 'projects/group_form.html', {'form': form, 'course': course})
 
 @login_required
 def confirm_membership(request, membership_id):
@@ -85,8 +97,19 @@ def upload_submission(request, group_id):
 def professor_dashboard(request):
     if request.user.role != 'professor' and not request.user.is_staff:
         return redirect('dashboard')
-    groups = Group.objects.all()
-    return render(request, 'projects/professor_dashboard.html', {'groups': groups})
+    courses = Course.objects.all().order_by('-year', '-semester')
+    return render(request, 'projects/professor_dashboard.html', {'courses': courses})
+
+@login_required
+def course_detail(request, course_id):
+    if request.user.role != 'professor' and not request.user.is_staff:
+        return redirect('dashboard')
+    course = get_object_or_404(Course, id=course_id)
+    groups = Group.objects.filter(course=course)
+    return render(request, 'projects/course_detail.html', {
+        'course': course,
+        'groups': groups
+    })
 
 @login_required
 def grade_group(request, group_id):
@@ -119,14 +142,21 @@ def export_grades_csv(request):
     if request.user.role != 'professor' and not request.user.is_staff:
         return redirect('dashboard')
     
+    course_id = request.GET.get('course_id')
+    course = get_object_or_404(Course, id=course_id) if course_id else None
+    
+    filename = f"grades_{course.name}.csv" if course else "all_grades.csv"
+    
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="final_grades.csv"'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     # Fix for Chinese characters in Excel
     response.write('\ufeff'.encode('utf8'))
     writer = csv.writer(response)
     writer.writerow(['學號', '姓名', '組別', '計畫名稱', '小組分數', '貢獻度(%)', '貢獻度描述'])
     
-    memberships = Membership.objects.select_related('user', 'group', 'group__score').all()
+    memberships = Membership.objects.select_related('user', 'group', 'group__course', 'group__score').all()
+    if course:
+        memberships = memberships.filter(group__course=course)
     
     for m in memberships:
         score_obj = getattr(m.group, 'score', None)
