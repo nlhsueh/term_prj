@@ -48,29 +48,50 @@ class CourseAdmin(admin.ModelAdmin):
             csv_file = request.FILES["csv_file"]
             decoded_file = csv_file.read().decode('utf-8')
             io_string = io.StringIO(decoded_file)
-            reader = csv.DictReader(io_string)
+            rows = list(csv.reader(io_string))
+            if not rows:
+                self.message_user(request, "The CSV file is empty.", level=messages.WARNING)
+                return redirect("..")
+            
+            # Determine if first row is a header
+            first_row = [str(c).strip().lower() for c in rows[0]]
+            has_header = 'student_id' in first_row or '学号' in first_row or '學號' in first_row
+            
+            if has_header:
+                # Find indices by header names
+                try:
+                    id_idx = first_row.index('student_id') if 'student_id' in first_row else (first_row.index('學號') if '學號' in first_row else first_row.index('学号'))
+                    name_idx = first_row.index('name') if 'name' in first_row else (first_row.index('姓名') if '姓名' in first_row else 1)
+                except ValueError:
+                    id_idx, name_idx = 0, 1
+                data_start = 1
+            else:
+                # No header, assume column 0 is ID, column 1 is Name
+                id_idx, name_idx = 0, 1
+                data_start = 0
+
             count = 0
-            for row in reader:
-                student_id = row.get('student_id')
-                name = row.get('name')
-                if student_id and name:
-                    username = student_id
-                    password = student_id[-4:]
-                    user, created = User.objects.update_or_create(
-                        username=username,
-                        defaults={
-                            'student_id': student_id,
-                            'first_name': name,
-                            'role': 'student',
-                        }
-                    )
-                    if created:
-                        user.set_password(password)
-                        user.save()
-                    
-                    # Link student to this course
-                    course.students.add(user)
-                    count += 1
+            for row in rows[data_start:]:
+                if len(row) > max(id_idx, name_idx):
+                    student_id = row[id_idx].strip()
+                    name = row[name_idx].strip()
+                    if student_id and name:
+                        username = student_id
+                        password = student_id[-4:]
+                        user, created = User.objects.update_or_create(
+                            username=username,
+                            defaults={
+                                'student_id': student_id,
+                                'first_name': name,
+                                'role': 'student',
+                            }
+                        )
+                        if created:
+                            user.set_password(password)
+                            user.save()
+                        
+                        course.students.add(user)
+                        count += 1
             self.message_user(request, f"Successfully imported {count} students to {course.name}.")
             return redirect("..")
         
