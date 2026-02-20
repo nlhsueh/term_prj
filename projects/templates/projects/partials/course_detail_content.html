@@ -63,3 +63,19 @@
         </tbody>
     </table>
 </div>
+
+<div class="mt-12 bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-bold mb-4 text-red-600">尚未加入小組的學生 ({{ unassigned_students.count }} 位)</h2>
+    {% if unassigned_students %}
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {% for student in unassigned_students %}
+        <div class="p-3 border rounded text-sm bg-gray-50 flex flex-col items-center">
+            <span class="font-bold">{{ student.first_name }}</span>
+            <span class="text-gray-500 text-xs">{{ student.student_id }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-500 italic">所有學生皆已加入小組。</p>
+    {% endif %}
+</div>
