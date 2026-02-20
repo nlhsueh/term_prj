@@ -24,14 +24,25 @@ def dashboard(request):
     if request.user.role == 'professor' or request.user.is_staff:
         return redirect('professor_dashboard')
         
-    # Get active courses for this student
-    courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
-    
     # memberships for the user
     memberships = Membership.objects.filter(user=request.user).select_related('group', 'group__course')
     
+    # Courses the user is enrolled in
+    courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
+    
+    # identify courses where the user is already in a group
+    courses_with_groups = set(m.group.course.id for m in memberships if m.group.course)
+    
+    # Pre-process courses for the dashboard
+    course_list = []
+    for c in courses:
+        course_list.append({
+            'course': c,
+            'has_group': c.id in courses_with_groups
+        })
+    
     context = {
-        'courses': courses,
+        'course_list': course_list,
         'memberships': memberships,
     }
     
@@ -94,6 +105,48 @@ def create_group(request):
         pass
             
     return render(request, 'projects/group_form.html', {'form': form, 'course': course})
+
+@login_required
+def edit_group(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    
+    # Only leader can edit
+    if group.leader != request.user:
+        messages.error(request, "只有組長可以修改小組資訊。")
+        return redirect('dashboard')
+    
+    course = group.course
+    
+    if request.method == 'POST':
+        form = GroupForm(request.POST, instance=group, user=request.user, course=course)
+        if form.is_valid():
+            with transaction.atomic():
+                group = form.save()
+                
+                # Update members
+                selected_members = form.cleaned_data['members']
+                
+                # Current non-leader members
+                current_memberships = Membership.objects.filter(group=group).exclude(user=group.leader)
+                current_user_ids = set(m.user_id for m in current_memberships)
+                selected_user_ids = set(m.id for m in selected_members)
+                
+                # Delete removed members
+                current_memberships.exclude(user_id__in=selected_user_ids).delete()
+                
+                # Add new members
+                for member in selected_members:
+                    if member.id not in current_user_ids:
+                        Membership.objects.create(user=member, group=group, is_confirmed=False)
+                
+                messages.success(request, "小組資訊已更新。")
+                return redirect('dashboard')
+    else:
+        # Pre-populate members
+        initial_members = group.members.exclude(id=group.leader.id)
+        form = GroupForm(instance=group, user=request.user, course=course, initial={'members': initial_members})
+        
+    return render(request, 'projects/group_form.html', {'form': form, 'course': course, 'is_edit': True})
 
 @login_required
 def confirm_membership(request, membership_id):

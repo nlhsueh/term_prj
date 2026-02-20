@@ -31,6 +31,7 @@ class Group(models.Model):
     leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name='led_groups')
     members = models.ManyToManyField(User, through='Membership', related_name='joined_groups')
     project_name = models.CharField(max_length=200)
+    project_description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name

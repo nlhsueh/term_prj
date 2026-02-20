@@ -17,16 +17,55 @@ class GroupForm(forms.ModelForm):
 
     class Meta:
         model = Group
-        fields = ['name', 'project_name', 'members']
+        fields = ['name', 'project_name', 'project_description', 'members']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500',
+                'placeholder': '例如：第一組'
+            }),
+            'project_name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500',
+                'placeholder': '例如：智慧停車系統'
+            }),
+            'project_description': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500',
+                'rows': 4,
+                'placeholder': '請簡述您的專題目標、功能與技術架構...'
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
+        course = kwargs.pop('course', None)
         super().__init__(*args, **kwargs)
         if self.user:
-            # exclude the leader from member selection as they are automatically a member
-            self.fields['members'].queryset = User.objects.filter(
-                role='student'
-            ).exclude(id=self.user.id).exclude(joined_groups__isnull=False)
+            # Filtering logic:
+            # 1. Students only
+            # 2. Exclude the current leader
+            # 3. Exclude students already in ANY group for THIS course (except those already in this group if editing)
+            
+            # Use provided course or get from instance
+            current_course = course or (self.instance.course if self.instance and self.instance.pk else None)
+            
+            qs = User.objects.filter(role='student').exclude(id=self.user.id)
+            
+            if current_course:
+                # enrolled in this course
+                qs = qs.filter(enrolled_courses=current_course)
+                
+                # exclude people in other groups of this same course
+                other_groups_members = User.objects.filter(
+                    joined_groups__course=current_course
+                )
+                if self.instance and self.instance.pk:
+                    other_groups_members = other_groups_members.exclude(joined_groups=self.instance)
+                
+                qs = qs.exclude(id__in=other_groups_members)
+            else:
+                # fall back to global exclusion if no course context (safety)
+                qs = qs.exclude(joined_groups__isnull=False)
+                
+            self.fields['members'].queryset = qs
 
 class SubmissionForm(forms.ModelForm):
     class Meta:

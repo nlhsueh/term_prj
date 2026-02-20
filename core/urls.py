@@ -14,6 +14,7 @@ urlpatterns = [
     
     path('', project_views.dashboard, name='dashboard'),
     path('group/create/', project_views.create_group, name='create_group'),
+    path('group/edit/<int:group_id>/', project_views.edit_group, name='edit_group'),
     path('group/confirm/<int:membership_id>/', project_views.confirm_membership, name='confirm_membership'),
     path('group/upload/<int:group_id>/', project_views.upload_submission, name='upload_submission'),
     path('professor/', project_views.professor_dashboard, name='professor_dashboard'),
