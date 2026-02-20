@@ -226,3 +226,25 @@ def export_grades_csv(request):
         ])
     
     return response
+
+@login_required
+def impersonate_user(request, user_id):
+    # original_user is set by the middleware if already impersonating, 
+    # but here we check the real logged in user role.
+    real_user = getattr(request, 'original_user', request.user)
+    
+    if real_user.role != 'professor' and not real_user.is_staff:
+        messages.error(request, "權限不足。")
+        return redirect('dashboard')
+    
+    target_user = get_object_or_404(User, id=user_id, role='student')
+    request.session['impersonate_user_id'] = target_user.id
+    messages.success(request, f"正在以 {target_user.first_name} 的視角操作系統。")
+    return redirect('dashboard')
+
+@login_required
+def stop_impersonating(request):
+    if 'impersonate_user_id' in request.session:
+        del request.session['impersonate_user_id']
+        messages.success(request, "已停止模擬視角。")
+    return redirect('professor_dashboard')

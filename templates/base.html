@@ -9,8 +9,16 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900" hx-boost="true" hx-target="#main-content" hx-select="#main-content"
-    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-gray-50 text-gray-900" hx-boost="true" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% if request.is_impersonating %}
+    <div
+        class="bg-yellow-100 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-center text-sm font-bold flex justify-center items-center">
+        <span>⚠️ 目前正在以 {{ user.first_name }} ({{ user.student_id }}) 的視角進行模擬操作</span>
+        <a href="{% url 'stop_impersonating' %}"
+            class="ml-4 bg-yellow-800 text-white px-2 py-1 rounded text-xs hover:bg-yellow-900"
+            hx-boost="false">停止模擬</a>
+    </div>
+    {% endif %}
     <nav class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <a href="{% url 'dashboard' %}" class="text-xl font-bold">專案管理系統</a>

@@ -20,4 +20,6 @@ urlpatterns = [
     path('professor/course/<int:course_id>/', project_views.course_detail, name='course_detail'),
     path('professor/grade/<int:group_id>/', project_views.grade_group, name='grade_group'),
     path('professor/export-csv/', project_views.export_grades_csv, name='export_grades_csv'),
+    path('impersonate/<int:user_id>/', project_views.impersonate_user, name='impersonate_user'),
+    path('impersonate/stop/', project_views.stop_impersonating, name='stop_impersonating'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

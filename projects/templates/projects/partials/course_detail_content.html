@@ -32,8 +32,14 @@
                 <td class="px-6 py-4">
                     <div class="text-xs space-y-1">
                         {% for m in group.membership_set.all %}
-                        <div class="{% if m.user == group.leader %}font-bold text-blue-800{% endif %}">
-                            {{ m.user.first_name }} ({{ m.user.student_id }})
+                        <div
+                            class="{% if m.user == group.leader %}font-bold text-blue-800{% endif %} flex justify-between group">
+                            <span>{{ m.user.first_name }} ({{ m.user.student_id }})</span>
+                            <a href="{% url 'impersonate_user' m.user.id %}"
+                                class="hidden group-hover:inline-block ml-2 text-xs text-blue-500 hover:underline"
+                                title="以該學生視角開啟">
+                                [模擬視角]
+                            </a>
                         </div>
                         {% endfor %}
                     </div>
@@ -69,9 +75,14 @@
     {% if unassigned_students %}
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {% for student in unassigned_students %}
-        <div class="p-3 border rounded text-sm bg-gray-50 flex flex-col items-center">
+        <div class="p-3 border rounded text-sm bg-gray-50 flex flex-col items-center group relative">
             <span class="font-bold">{{ student.first_name }}</span>
             <span class="text-gray-500 text-xs">{{ student.student_id }}</span>
+            <a href="{% url 'impersonate_user' student.id %}"
+                class="absolute inset-0 bg-blue-600 bg-opacity-90 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center rounded transition-opacity text-xs"
+                hx-boost="false">
+                以學生視角開啟
+            </a>
         </div>
         {% endfor %}
     </div>
