@@ -84,6 +84,16 @@ def confirm_membership(request, membership_id):
     if request.method == 'POST':
         membership.is_confirmed = True
         membership.save()
+        
+        if request.headers.get('HX-Request'):
+            # Return fresh dashboard partial
+            courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
+            memberships = Membership.objects.filter(user=request.user).select_related('group', 'group__course')
+            return render(request, 'projects/partials/dashboard_content.html', {
+                'courses': courses,
+                'memberships': memberships,
+            })
+            
         return redirect('dashboard')
     return render(request, 'projects/confirm_membership.html', {'membership': membership})
 
