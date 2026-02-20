@@ -36,10 +36,10 @@ def dashboard(request):
         if m.group.course:
             courses_with_groups.add(m.group.course.id)
             # Self-healing: ensure leader's own membership exists
-            if m.group.leader == request.user:
-                Membership.objects.get_or_create(user=request.user, group=m.group, defaults={'is_confirmed': True})
+            if m.group.leader_id == request.user.id:
+                Membership.objects.get_or_create(user_id=request.user.id, group=m.group, defaults={'is_confirmed': True})
     
-    # Pre-process courses for the dashboard & Data Normalization check
+    # Pre-process courses: ensure no literal tags
     course_list = []
     for c in courses:
         # DATA NORMALIZATION: If somehow semester contains literal tags, fix it
@@ -55,7 +55,7 @@ def dashboard(request):
     context = {
         'course_list': course_list,
         'memberships': memberships,
-        'app_version': '2.1.3',
+        'app_version': '2.2.0',
     }
     
     # Return partial if targeted, otherwise full page
@@ -138,20 +138,18 @@ def edit_group(request, group_id):
                 
                 # Update members: handle purely non-leader members
                 selected_members = form.cleaned_data['members']
-                selected_user_ids = set(m.id for m in selected_members)
                 
                 # 1. Delete all current non-leader memberships
-                Membership.objects.filter(group=group).exclude(user=group.leader).delete()
+                Membership.objects.filter(group=group).exclude(user_id=group.leader_id).delete()
                 
-                # 2. Re-create memberships from selected list (excluding leader just in case)
+                # 2. Re-create memberships from selected list (excluding leader)
                 for member in selected_members:
-                    if member != group.leader:
+                    if member.id != group.leader_id:
                         Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
                 
                 # 3. ABSOLUTELY ensure the leader is a member and confirmed
-                # We use the instance group and the leader from that instance
                 Membership.objects.update_or_create(
-                    user=group.leader, 
+                    user_id=group.leader_id, 
                     group=group, 
                     defaults={'is_confirmed': True}
                 )
