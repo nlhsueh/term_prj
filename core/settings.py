@@ -73,12 +73,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
-import dj_database_url
+# Database configuration
+# Support Railway's DATABASE_URL or MYSQL_URL
+db_url = os.environ.get('DATABASE_URL') or os.environ.get('MYSQL_URL')
 
-if os.environ.get('DATABASE_URL'):
+if db_url:
     db_ssl = os.environ.get('DB_SSL', 'True') == 'True'
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=db_ssl)
+        'default': dj_database_url.config(default=db_url, conn_max_age=600, ssl_require=db_ssl)
     }
 elif os.environ.get('DB_NAME'):
     DATABASES = {
@@ -92,12 +94,15 @@ elif os.environ.get('DB_NAME'):
         }
     }
 else:
+    # Fallback to SQLite (only for local dev, will be wiped on Railway deploys)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    if not DEBUG:
+        print("WARNING: Using non-persistent SQLite in production! Data will be lost on redeploy.")
 
 AUTH_USER_MODEL = 'projects.User'
 
