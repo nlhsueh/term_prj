@@ -34,7 +34,12 @@
                         {% for m in group.membership_set.all %}
                         <div
                             class="{% if m.user == group.leader %}font-bold text-blue-800{% endif %} flex justify-between group">
-                            <span>{{ m.user.first_name }} ({{ m.user.student_id }})</span>
+                            <span class="flex items-center">
+                                {{ m.user.first_name }} ({{ m.user.student_id }})
+                                {% if not m.is_confirmed %}
+                                <span class="ml-1 text-[10px] text-red-500 font-bold">(未確認)</span>
+                                {% endif %}
+                            </span>
                             <a href="{% url 'impersonate_user' m.user.id %}"
                                 class="hidden group-hover:inline-block ml-2 text-xs text-blue-500 hover:underline"
                                 title="以該學生視角開啟">
