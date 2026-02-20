@@ -44,20 +44,32 @@ def dashboard(request):
 @login_required
 def create_group(request):
     course_id = request.GET.get('course_id')
-    course = get_object_or_404(Course, id=course_id) if course_id else None
+    user_courses = request.user.enrolled_courses.all()
+    
+    if course_id:
+        course = get_object_or_404(Course, id=course_id)
+    elif user_courses.count() == 1:
+        course = user_courses.first()
+    else:
+        # If no course_id and multiple courses, we can't safely proceed
+        # For now, redirect back with a message or just use the first one
+        # but the best is to force selecting from the dashboard
+        messages.error(request, "請從特定課程中點擊「發起分組」。")
+        return redirect('dashboard')
     
     # Check if user is already in a group for this specific course
-    if course and Membership.objects.filter(user=request.user, group__course=course).exists():
+    if Membership.objects.filter(user=request.user, group__course=course).exists():
         messages.warning(request, f"你已在 {course.name} 的小組中。")
         return redirect('dashboard')
 
     if request.method == 'POST':
         form = GroupForm(request.POST, user=request.user)
         if form.is_valid():
+            from django.db import transaction
             with transaction.atomic():
                 group = form.save(commit=False)
                 group.leader = request.user
-                group.course = course # Link to course
+                group.course = course # MUST have a course
                 group.save()
                 
                 # Manual many-to-many through Membership

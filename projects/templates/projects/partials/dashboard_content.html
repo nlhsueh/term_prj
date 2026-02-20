@@ -39,12 +39,6 @@
             </div>
         </div>
         {% endfor %}
-        {% else %}
-        <p class="text-gray-500 italic">尚未加入任何組別。</p>
-        <div class="mt-4">
-            <a href="{% url 'create_group' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">發起分組
-                (擔任隊長)</a>
-        </div>
         {% endif %}
     </div>
 
