@@ -55,7 +55,7 @@ def dashboard(request):
     context = {
         'course_list': course_list,
         'memberships': memberships,
-        'app_version': '3.1.0',
+        'app_version': '3.2.0',
     }
     
     # Return partial if targeted, otherwise full page
@@ -136,15 +136,17 @@ def edit_group(request, group_id):
                 group = form.save(commit=False)
                 group.save()
                 
-                # Update members: handle purely non-leader members
+                # Update members: preserve confirmation status
                 selected_members = form.cleaned_data['members']
+                selected_user_ids = set(m.id for m in selected_members)
                 
-                # 1. Delete all current non-leader memberships
-                Membership.objects.filter(group=group).exclude(user_id=group.leader_id).delete()
+                # 1. Remove memberships of students who were unselected (exclude leader)
+                Membership.objects.filter(group=group).exclude(user_id=group.leader_id).exclude(user_id__in=selected_user_ids).delete()
                 
-                # 2. Re-create memberships from selected list (excluding leader)
+                # 2. Add new memberships for newly selected students
                 for member in selected_members:
                     if member.id != group.leader_id:
+                        # get_or_create will NOT change is_confirmed if they already exist
                         Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
                 
                 # 3. ABSOLUTELY ensure the leader is a member and confirmed
