@@ -155,3 +155,5 @@ LOGOUT_REDIRECT_URL = 'login'
 # HTTPS settings for Railway
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

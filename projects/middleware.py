@@ -8,12 +8,24 @@ class ImpersonationMiddleware(MiddlewareMixin):
         if impersonate_id and request.user.is_authenticated and (request.user.role == 'professor' or request.user.is_staff):
             try:
                 target_user = User.objects.get(id=impersonate_id)
-                # Store the original user so we can still check permissions if needed
                 request.original_user = request.user
-                # Override request.user for the duration of this request
                 request.user = target_user
                 request.is_impersonating = True
             except User.DoesNotExist:
                 del request.session['impersonate_user_id']
         else:
             request.is_impersonating = False
+
+class PasswordChangeMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if request.user.is_authenticated and request.user.role == 'student':
+            if not request.user.has_changed_password:
+                # Allow access to password change views and logout
+                allowed_paths = [
+                    '/accounts/password_change/',
+                    '/accounts/password_change/done/',
+                    '/accounts/logout/',
+                ]
+                if request.path not in allowed_paths and not request.path.startswith('/static/'):
+                    from django.shortcuts import redirect
+                    return redirect('password_change')
