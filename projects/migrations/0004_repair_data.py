@@ -16,7 +16,7 @@ def repair_data(apps, schema_editor):
             if ' (' in course.name:
                 course.name = course.name.split(' (')[0]
             else:
-                course.name = course.name.replace('{{ item.course.semester }}', '').replace('()', '').strip()
+                course.name = course.name.replace('{{item.course.semester}}', '').replace('()', '').strip()
             changed = True
         if changed:
             course.save()
