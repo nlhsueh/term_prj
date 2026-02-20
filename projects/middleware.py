@@ -15,7 +15,7 @@ class PasswordChangeMiddleware:
                 reverse('admin:projects_user_change', args=[request.user.id]) if request.user.is_staff else None
             ]
             
-            if not request.user.has_changed_password and request.path not in filter(None, exempt_urls):
+            if not request.user.is_staff and not request.user.has_changed_password and request.path not in filter(None, exempt_urls):
                 return redirect('password_change')
 
         response = self.get_response(request)
