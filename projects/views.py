@@ -31,11 +31,22 @@ def dashboard(request):
     courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
     
     # identify courses where the user is already in a group
-    courses_with_groups = set(m.group.course.id for m in memberships if m.group.course)
+    courses_with_groups = set()
+    for m in memberships:
+        if m.group.course:
+            courses_with_groups.add(m.group.course.id)
+            # Self-healing: ensure leader's own membership exists
+            if m.group.leader == request.user:
+                Membership.objects.get_or_create(user=request.user, group=m.group, defaults={'is_confirmed': True})
     
-    # Pre-process courses for the dashboard
+    # Pre-process courses for the dashboard & Data Normalization check
     course_list = []
     for c in courses:
+        # DATA NORMALIZATION: If somehow semester contains literal tags, fix it
+        if '{{' in str(c.semester):
+            c.semester = '1'
+            c.save()
+            
         course_list.append({
             'course': c,
             'has_group': c.id in courses_with_groups
@@ -44,7 +55,7 @@ def dashboard(request):
     context = {
         'course_list': course_list,
         'memberships': memberships,
-        'app_version': '2.1.2',
+        'app_version': '2.1.3',
     }
     
     # Return partial if targeted, otherwise full page
