@@ -120,9 +120,15 @@ def course_detail(request, course_id):
         return redirect('dashboard')
     course = get_object_or_404(Course, id=course_id)
     groups = Group.objects.filter(course=course)
+    
+    # Students who are not in any group in this course
+    assigned_student_ids = Membership.objects.filter(group__course=course).values_list('user_id', flat=True)
+    unassigned_students = course.students.exclude(id__in=assigned_student_ids)
+    
     context = {
         'course': course,
-        'groups': groups
+        'groups': groups,
+        'unassigned_students': unassigned_students,
     }
     
     if request.headers.get('HX-Request'):
