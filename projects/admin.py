@@ -10,10 +10,22 @@ from .forms import CSVImportForm
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('student_id', 'username', 'role', 'has_changed_password')
-    fieldsets = UserAdmin.fieldsets + (
-        ('Custom Fields', {'fields': ('student_id', 'role', 'has_changed_password')}),
+    list_display = ('student_id', 'first_name', 'username', 'role', 'display_groups', 'has_changed_password')
+    list_filter = ('role', 'has_changed_password')
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+        ('Custom Info', {'fields': ('student_id', 'role', 'has_changed_password')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
+    # We explicitly omit 'groups' and 'user_permissions' from fieldsets to avoid confusion 
+    # since this project uses a custom Group model.
+    
+    def display_groups(self, obj):
+        return ", ".join([g.name for g in obj.joined_groups.all()])
+    display_groups.short_description = '所屬小組'
+
     actions = ['reset_password']
 
     @admin.action(description="Reset password to student ID's last 4 digits")
