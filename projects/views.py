@@ -20,6 +20,10 @@ class CustomPasswordChangeView(PasswordChangeView):
 
 @login_required
 def dashboard(request):
+    # Detect role and redirect if professor or staff
+    if request.user.role == 'professor' or request.user.is_staff:
+        return redirect('professor_dashboard')
+        
     # Get active courses for this student
     courses = Course.objects.filter(students=request.user).order_by('-year', '-semester')
     

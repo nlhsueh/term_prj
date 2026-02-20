@@ -3,8 +3,12 @@
 {% block content %}
 <div class="mb-6 flex justify-between items-center">
     <h1 class="text-3xl font-bold">教授管理後台</h1>
-    <a href="{% url 'export_grades_csv' %}"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">匯出所有成績 (CSV)</a>
+    <div class="flex space-x-2">
+        <a href="/admin/projects/course/add/"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">+ 建立新課程</a>
+        <a href="{% url 'export_grades_csv' %}"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-bold">匯出所有成績 (CSV)</a>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
