@@ -44,6 +44,7 @@ def dashboard(request):
     context = {
         'course_list': course_list,
         'memberships': memberships,
+        'app_version': '2.1.1',
     }
     
     # Return partial if targeted, otherwise full page
