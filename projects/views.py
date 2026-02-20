@@ -140,8 +140,11 @@ def edit_group(request, group_id):
                     if member.id not in current_user_ids:
                         Membership.objects.get_or_create(user=member, group=group, defaults={'is_confirmed': False})
                 
-                # Double check leader has confirmed membership
-                Membership.objects.get_or_create(user=group.leader, group=group, defaults={'is_confirmed': True})
+                # Ensure leader has confirmed membership
+                Membership.objects.update_or_create(
+                    user=group.leader, group=group, 
+                    defaults={'is_confirmed': True}
+                )
                 
                 messages.success(request, "小組資訊已更新。")
                 return redirect('dashboard')

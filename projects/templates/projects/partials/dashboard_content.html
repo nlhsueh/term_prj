@@ -72,8 +72,7 @@
         {% if course_list %}
         {% for item in course_list %}
         <div class="mb-4 p-4 border rounded bg-gray-50">
-            <p class="font-bold text-lg text-blue-800">{{ item.course.name }} ({{ item.course.year }}-{{
-                item.course.semester }})</p>
+            <p class="font-bold text-lg text-blue-800">{{ item.course.name }} ({{ item.course.year }}-{{ item.course.semester }})</p>
             <div class="grid grid-cols-1 gap-1 mt-2 text-sm text-gray-700">
                 <p><span class="font-semibold">分組截止:</span> {{ item.course.group_deadline|date:"Y-m-d H:i" }}</p>
                 <p><span class="font-semibold">計畫書截止:</span> {{ item.course.proposal_deadline|date:"Y-m-d H:i" }}</p>
@@ -93,4 +92,3 @@
         <p class="text-gray-500 italic">尚未加入任何課程。</p>
         {% endif %}
     </div>
-</div>
