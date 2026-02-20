@@ -9,7 +9,8 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 
-<body class="bg-gray-50 text-gray-900" hx-boost="true" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-gray-50 text-gray-900" hx-boost="true" hx-target="body"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% if request.is_impersonating %}
     <div
         class="bg-yellow-100 border-b border-yellow-200 text-yellow-800 px-4 py-2 text-center text-sm font-bold flex justify-center items-center">
