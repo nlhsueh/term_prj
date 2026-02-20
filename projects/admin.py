@@ -86,7 +86,7 @@ class CourseAdmin(admin.ModelAdmin):
                                 'role': 'student',
                             }
                         )
-                        if created:
+                        if created or not user.has_changed_password:
                             user.set_password(password)
                             user.save()
                         
